@@ -33,7 +33,7 @@ gurl http://eu.httpbin.org/put -X PUT -d '{"name": "Ludwig Wittgenstein"}' -H "C
 			return
 		}
 
-		conn, err := httpclient.Dial(host, port)
+		conn, err := httpclient.InitiateSocketConnection(host, port)
 		if err != nil {
 			fmt.Println(err)
 			return

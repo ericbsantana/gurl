@@ -28,7 +28,7 @@ func PrepareRequest(requestFlag string, headers []string, dataFlag string, host 
 	return request, nil
 }
 
-func Dial(host string, port string) (net.Conn, error) {
+func InitiateSocketConnection(host string, port string) (net.Conn, error) {
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", host, port))
 
 	return conn, err
