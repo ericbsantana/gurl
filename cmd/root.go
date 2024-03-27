@@ -11,15 +11,16 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "gurl <url>",
-	Short: "A Golang curl command line tool",
-	Long:  `A Golang curl command line tool that can be used to make HTTP requests to a server.`,
-	Args:  validateArgs,
+	Use:     "gurl <url>",
+	Short:   "A Golang curl command line tool",
+	Long:    `A Golang curl command line tool that can be used to make HTTP requests to a server.`,
+	Args:    validateArgs,
+	Example: "gurl http://eu.httpbin.org/get\ngurl http://eu.httpbin.org/bearer -H 'Authorization: Bearer guineapig'",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		requestFlag, _ := cmd.Flags().GetString("request")
-
 		verbose, _ := cmd.Flags().GetBool("verbose")
+		headers, _ := cmd.Flags().GetStringArray("header")
 
 		u, err := url.Parse(args[0])
 		if err != nil {
@@ -46,6 +47,11 @@ var rootCmd = &cobra.Command{
 		request += fmt.Sprintf("Host: %s\n", u.Host)
 		request += "Accept: */*\n"
 		request += "Connection: close\n"
+
+		for _, header := range headers {
+			request += header + "\n"
+		}
+
 		request += "\n"
 
 		if verbose {
@@ -53,6 +59,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		_, err = conn.Write([]byte(request))
+
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -87,10 +94,12 @@ func Execute() {
 func init() {
 	var Verbose bool
 	var Request string
+	var Headers []string
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().StringVarP(&Request, "request", "X", "GET", "HTTP request method")
+	rootCmd.Flags().StringArrayVarP(&Headers, "header", "H", []string{}, "HTTP request headers")
 }
 
 func validateArgs(cmd *cobra.Command, args []string) error {
