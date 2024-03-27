@@ -1,12 +1,10 @@
 # gURL
 
-gURL is a Golang curl command line tool that can be used to make HTTP requests to a server.
+gURL is a Golang command line tool inspired by `curl`. It can be used to make HTTP requests to a server.
 
-## Purpose of the project
+## Purpose of the Project
 
-The purpose of this project was to create a simple CLI tool inspired by the `curl` command line tool. It is not as complete as `curl` and indeed do not intend to be, but it can be used to make simple HTTP requests to a server.
-
-It was also made to learn more about Golang and how to create CLI tools with it, more specifically on complete this [challenge](https://codingchallenges.fyi/challenges/challenge-curl)
+This project was created to provide a simple CLI tool for making HTTP requests. While it's not as comprehensive as `curl`, it serves as a practical introduction to creating CLI tools with Go. This project was also a response to a [coding challenge](https://codingchallenges.fyi/challenges/challenge-curl).
 
 ## Installation
 
