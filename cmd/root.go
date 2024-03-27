@@ -11,18 +11,24 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:     "gurl <url>",
-	Short:   "A Golang curl command line tool",
-	Long:    `A Golang curl command line tool that can be used to make HTTP requests to a server.`,
-	Args:    validateArgs,
-	Example: "gurl http://eu.httpbin.org/get\ngurl http://eu.httpbin.org/bearer -H 'Authorization: Bearer guineapig'",
+	Use:   "gurl <url>",
+	Short: "A Golang curl command line tool",
+	Long:  `A Golang curl command line tool that can be used to make HTTP requests to a server.`,
+	Args:  validateArgs,
+	Example: `
+gurl http://eu.httpbin.org/get
+gurl http://eu.httpbin.org/bearer -H 'Authorization: Bearer guineapig'
+gurl http://eu.httpbin.org/post -X POST -d '{"name": "Robert J. Oppenheimer"}' -H "Content-Type: application/json"
+gurl http://eu.httpbin.org/put -X PUT -d '{"name": "Ludwig Wittgenstein"}' -H "Content-Type: application/json"`,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		requestFlag, _ := cmd.Flags().GetString("request")
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		headers, _ := cmd.Flags().GetStringArray("header")
+		requestFlag, _ := cmd.Flags().GetString("request")
+		dataFlag, _ := cmd.Flags().GetString("data")
 
 		u, err := url.Parse(args[0])
+
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -52,6 +58,12 @@ var rootCmd = &cobra.Command{
 			request += header + "\n"
 		}
 
+		if dataFlag != "" {
+			request += fmt.Sprintf("Content-Length: %d\n", len(dataFlag))
+			request += "\n"
+			request += dataFlag
+		}
+
 		request += "\n"
 
 		if verbose {
@@ -66,6 +78,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		buffer := make([]byte, 1024)
+
 		_, err = conn.Read(buffer)
 		if err != nil {
 			fmt.Println(err)
@@ -95,11 +108,14 @@ func init() {
 	var Verbose bool
 	var Request string
 	var Headers []string
+	var Data string
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().StringVarP(&Request, "request", "X", "GET", "HTTP request method")
+	rootCmd.PersistentFlags().StringVarP(&Data, "data", "d", "", "HTTP request data")
 	rootCmd.Flags().StringArrayVarP(&Headers, "header", "H", []string{}, "HTTP request headers")
+
 }
 
 func validateArgs(cmd *cobra.Command, args []string) error {
