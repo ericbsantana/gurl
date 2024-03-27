@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"net"
-	"net/url"
+	"gurl/internal/formatter"
+	"gurl/internal/httpclient"
+	"gurl/internal/parser"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -23,55 +23,29 @@ gurl http://eu.httpbin.org/put -X PUT -d '{"name": "Ludwig Wittgenstein"}' -H "C
 
 	Run: func(cmd *cobra.Command, args []string) {
 		verbose, _ := cmd.Flags().GetBool("verbose")
-		headers, _ := cmd.Flags().GetStringArray("header")
 		requestFlag, _ := cmd.Flags().GetString("request")
 		dataFlag, _ := cmd.Flags().GetString("data")
+		headers, _ := cmd.Flags().GetStringArray("header")
 
-		u, err := url.Parse(args[0])
-
+		host, port, path, err := parser.ParseURL(args[0])
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		port := u.Port()
-		hostname := u.Hostname()
-
-		if port == "" {
-			port = "80"
-		}
-
-		conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", hostname, port))
+		conn, err := httpclient.Dial(host, port)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		method := strings.ToUpper(requestFlag)
-
-		request := fmt.Sprintf("%s %s HTTP/1.1\n", method, u.Path)
-		request += fmt.Sprintf("Host: %s\n", u.Host)
-		request += "Accept: */*\n"
-		request += "Connection: close\n"
-
-		for _, header := range headers {
-			request += header + "\n"
-		}
-
-		if dataFlag != "" {
-			request += fmt.Sprintf("Content-Length: %d\n", len(dataFlag))
-			request += "\n"
-			request += dataFlag
-		}
-
-		request += "\n"
+		request, _ := httpclient.PrepareRequest(requestFlag, headers, dataFlag, host, path)
 
 		if verbose {
-			printRequestLines(request)
+			formatter.PrintRequestLines(request)
 		}
 
 		_, err = conn.Write([]byte(request))
-
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -85,10 +59,10 @@ gurl http://eu.httpbin.org/put -X PUT -d '{"name": "Ludwig Wittgenstein"}' -H "C
 			return
 		}
 
-		header, body := splitResponse(string(buffer))
+		header, body := formatter.SplitResponse(string(buffer))
 
 		if verbose {
-			printHeaderLines(header)
+			formatter.PrintHeaderLines(header)
 		}
 
 		fmt.Println(body)
@@ -132,23 +106,4 @@ func validateArgs(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
-}
-
-func printRequestLines(request string) {
-	lines := strings.Split(request, "\n")
-	for _, line := range lines[:len(lines)-1] {
-		fmt.Println(">" + line)
-	}
-}
-
-func splitResponse(response string) (header, body string) {
-	parts := strings.Split(response, "\r\n\r\n")
-	return parts[0], parts[1]
-}
-
-func printHeaderLines(header string) {
-	lines := strings.Split(header, "\n")
-	for _, line := range lines {
-		fmt.Println("<" + line)
-	}
 }
